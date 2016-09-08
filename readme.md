@@ -1,7 +1,7 @@
 
-# This is a Memonize Game 
+# This is a memorizing Game 
 
-Did you successful retrieve the planete in less than 20 Fail 
+Did you successful retrieve the planet in less than 20 Fail 
 
 ## Installation
 
