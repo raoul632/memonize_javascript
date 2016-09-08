@@ -1,0 +1,444 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Memory Game</title>
+<script src="modernizr-1.6.min.js"></script>
+
+
+</head>
+<body>
+<div style="position: absolute; top: 50px; left: 50px;">
+
+<canvas id="canvasOne" width="500" height="500" border-style="5px solid red">
+ Your browser does not support the HTML 5 Canvas. 
+</canvas>
+</div>
+
+
+<script>
+ window.onload = function() {
+var   theCanvas = document.getElementById('canvasOne');
+var context = theCanvas.getContext('2d');
+ var ctx = context ; 
+// Timing and frames per second
+    var lastframe = 0;
+    var fpstime = 0;
+    var framecount = 0;
+    var fps = 0;
+
+ var initialized = false;
+    var images = [];
+
+var loadcount = 0;
+var loadtotal = 0;
+var preloaded = false;
+var tiles = [];
+var shuffleArray = []; 
+
+var numAttempt = 0; 
+
+var winTheGame = false; 
+//for text score
+var gradient=context.createLinearGradient(0,0,theCanvas.width,0);
+gradient.addColorStop("0","white");
+gradient.addColorStop("1","blue");
+
+theCanvas.addEventListener("click", modifyTile, false);
+
+var checkIfTwo = 0; 
+var tempTile = []; 
+
+    function modifyTile(evt) {
+        evt.preventDefault();
+          //  console.log( " x "+ evt.clientX + " : " + " y "+evt.clientY); 
+         for (var i = 0; i < tiles.length; i++) {
+            if (tiles[i].isUnderMouse(evt.clientX -20  , evt.clientY - 20)) {
+                
+                if (tempTile.length < 2 )
+                {
+                   
+                   
+
+                    if(tiles[i].statusOpen == false && tiles[i].isFind == false  )
+                    { 
+                        tiles[i].statusOpen = true;
+                        tempTile.push(tiles[i]);
+                    } 
+
+                    //if we find the correct picture update object to find else 
+                    //flush the array and return card 
+                    if (tempTile.length ===2 )
+                    {
+                        if(tempTile[0].picture["src"] === tempTile[1].picture["src"])
+                        {
+                         //   console.log("i find the card")
+                            markCardFind(tempTile); 
+                            tempTile = []; 
+                            if(checkWin(tiles))
+                            {winTheGame = true;}
+                        } 
+                        else
+                        {
+                            numAttempt++; 
+                            
+                            setTimeout(function(){
+                                returnCard(tempTile); 
+                             //   console.log("you wrong"); 
+                                tempTile = []; 
+                            }, 500);
+                        }
+                    }
+                    
+                }
+            }
+        }
+    }
+
+    function markCardFind(tempTile){
+        tempTile.forEach(function(elem){
+           
+            elem.isFind = true; 
+        }); 
+
+    }
+
+    function returnCard(tempTile){
+        tempTile.forEach(function(elem){
+          //  console.log(elem); 
+            elem.statusOpen = false; 
+        }); 
+
+    }
+
+     function checkWin(tiles){
+        var isWin = tiles.length; 
+        var checkIsWin = 0; 
+        tiles.forEach(function(elem){
+            if(elem.isFind)
+            {
+                checkIsWin++; 
+                 if(checkIsWin == isWin)
+                 {
+                //    console.log("you win the game in " + numAttempt + " attempt"); 
+                    winTheGame = true; 
+                    return true; 
+                 }
+            }
+            else
+            {
+                return false; 
+            }
+        })
+
+    }
+
+    function loadImages(imagefiles) {
+    // Initialize variables
+    loadcount = 0;
+    loadtotal = imagefiles.length;
+    preloaded = false;
+ 
+    // Load the images
+    var loadedimages = [];
+    for (var i=0; i<imagefiles.length; i++) {
+        // Create the image object
+        var image = new Image();
+ 
+        // Add onload event handler
+        image.onload = function () {
+            loadcount++;
+            if (loadcount == loadtotal) {
+                // Done loading
+                preloaded = true;
+            }
+        };
+ 
+        // Set the source url of the image
+        image.src = imagefiles[i];
+ 
+        // Save to the image array
+        loadedimages[i] = image;
+    }
+ 
+    // Return an array of images
+    return loadedimages;
+}
+
+ 
+    // Initialize the game
+    function init() {
+        // Load images
+        var sources = {
+        imageFaceDown: 'img/leaf-green.png'
+      };
+
+      var planete = {
+        earth : 'img/planete/earth.jpg', 
+        jupiter : 'img/planete/jupiter.jpg', 
+        mars : 'img/planete/mars.jpg', 
+        mercure : 'img/planete/mercure.jpg', 
+        neptune : 'img/planete/neptune.jpg', 
+        pluto : 'img/planete/pluto.jpg', 
+        saturn : 'img/planete/saturn.jpg', 
+        titan : 'img/planete/titan.jpg', 
+        uranus : 'img/planete/uranus.jpg', 
+        venus : 'img/planete/venus.jpg', 
+      }
+
+    var images = loadImages([sources.imageFaceDown]);
+    var imagesPlanete = loadImages([planete.earth, planete.jupiter,
+      planete.mars, planete.mercure, planete.neptune, planete.pluto, 
+      planete.saturn, planete.titan, planete.uranus, planete.venus]); 
+ 
+      var Tile = function(x, y, picture) {
+    this.x = x;
+    this.y = y;
+    this.picture = picture;
+    this.width = 90;
+    this.height = 90;
+    this.statusOpen = false; 
+    this.isFind = false; 
+        };
+        
+        Tile.prototype.isOpen = function(){
+            if(this.statusOpen)
+            {
+                
+                this.drawFaceUp(); 
+                
+            }
+            else
+            {
+                this.drawFaceDown(); 
+
+            }
+        }; 
+        
+
+        Tile.prototype.drawFaceDown = function() {
+      
+        ctx.strokeStyle = "#FF";
+        ctx.strokeRect(this.x, this.y, this.width, this.height );
+      
+        context.drawImage(images[0], this.x, this.y,this.width, this.height ); 
+     
+
+        };
+
+         Tile.prototype.drawFaceUp = function() {
+      
+        ctx.strokeStyle = "#FF";
+        ctx.strokeRect(this.x, this.y, this.width, this.height );
+      
+        context.drawImage(this.picture, this.x, this.y,this.width, this.height ); 
+     
+
+        };
+
+      Tile.prototype.isUnderMouse = function(x, y) {
+            return x >= this.x && x <= this.x + this.width  &&
+                y >= this.y && y <= this.y + this.width;
+        };
+
+      var selected = [];
+       
+        for (var i = 0; i < 10; i++) {
+            // Randomly pick one from the array of faces
+            var randomInd = randomNumber(imagesPlanete.length);
+            var pla = imagesPlanete[randomInd];
+            // Push 2 copies onto array
+            selected.push(pla);
+            selected.push(pla);
+            // Remove from faces array so we don't re-pick
+            imagesPlanete.splice(randomInd, 1);
+        }
+        shuffleArray = shuffle(selected); 
+          // Enter main loop
+
+        var NUM_COLS = 5;
+        var NUM_ROWS = 4;
+        for (var i = 0; i < NUM_COLS; i++) {
+            for (var j = 0; j < NUM_ROWS; j++) {
+                //i * la taille des cellules +10 decale de 10 en x et 80 decale en y 
+                tiles.push(new Tile(i * 98 + 10, j * 98 + 80, shuffleArray.pop()));
+            }
+        }
+        main(0);
+    }
+
+    function shuffle(array) {
+    var counter = array.length;
+
+    // While there are elements in the array
+    while (counter > 0) {
+        // Pick a random index
+        var index = Math.floor(Math.random() * counter);
+
+        // Decrease counter by 1
+        counter--;
+
+        // And swap the last element with it
+        var temp = array[counter];
+        array[counter] = array[index];
+        array[index] = temp;
+    }
+
+    return array;
+}
+
+    function randomNumber(num) 
+    {
+      var number = Math.floor(Math.random()* num); 
+      return number; 
+
+    }
+ 
+    function update(tframe) {
+        var dt = (tframe - lastframe) / 1000;
+        lastframe = tframe;
+        
+        // Update the fps counter
+        updateFps(dt);
+        
+    }
+
+        // Render the game
+    function render() {
+        // Draw the frame
+        drawFrame();
+        
+             for (var i = 0; i < tiles.length; i++) {
+           tiles[i].isOpen();
+           //tiles[i].drawFaceUp();
+        }
+      
+    }
+    
+    // Draw a frame with a border
+    function drawFrame() {
+        // Draw background and a border
+
+        if (!winTheGame)
+        {
+                context.fillStyle = "#d0d0d0";
+                context.fillRect(0, 0, theCanvas.width, theCanvas.height);
+                context.fillStyle = "#e8eaec";
+                context.fillRect(1, 1, theCanvas.width-2, theCanvas.height-2);
+                
+                // Draw header
+                context.fillStyle = "#303030";
+                context.fillRect(0, 0, theCanvas.width, 65);
+                
+                // Draw title
+                context.fillStyle = "#ffffff";
+                context.font = "24px Verdana";
+                context.fillText("Memory Game", 10, 30);
+
+             
+                if (numAttempt != 0) 
+                {
+                context.fillStyle=gradient;
+                context.font = "20px Verdana";
+                context.fillText( numAttempt + " tentative ",theCanvas.width -150,30); 
+                }
+                // Display fps
+                context.fillStyle = "#ffffff";
+                context.font = "12px Verdana";
+                context.fillText("Fps: " + fps, 13, 50);
+         }
+         else
+         {
+            drawVictory();
+         }
+    }
+ 
+ function drawVictory(){
+
+       context.fillStyle = "#d0d0d0";
+                context.fillRect(0, 0, theCanvas.width, theCanvas.height);
+                context.fillStyle = "#e8eaec";
+                context.fillRect(1, 1, theCanvas.width-2, theCanvas.height-2);
+                
+                // Draw header
+                context.fillStyle = "#303030";
+                context.fillRect(0, 0, theCanvas.width, 65);
+                context.font = "24px Verdana";
+                gradient.addColorStop("0","white");
+                gradient.addColorStop("1","red");
+                context.fillStyle=gradient;
+                if (numAttempt < 20)
+                {
+                    context.fillText("You Win in " + numAttempt + " Press Alt+F5 to retry" , 10, 30);
+                }
+                else
+                {
+                    context.fillText( numAttempt + " attempt memory prb? Press Alt+F5 to retry" , 10, 30);
+                }
+
+ }
+
+ function updateFps(dt) {
+        if (fpstime > 0.25) {
+            // Calculate fps
+            fps = Math.round(framecount / fpstime);
+            
+            // Reset time and framecount
+            fpstime = 0;
+            framecount = 0;
+        }
+        
+        // Increase time and framecount
+        fpstime += dt;
+        framecount++;
+    }
+
+    // Main loop
+    function main(tframe) {
+        // Request animation frames
+        window.requestAnimationFrame(main);
+ 
+        if (!initialized) {
+            // Preloader
+ 
+            // Clear the theCanvas
+            context.clearRect(0, 0, theCanvas.width, theCanvas.height);
+ 
+            // Draw the frame
+            drawFrame();
+ 
+            // Draw a progress bar
+            var loadpercentage = loadcount/loadtotal;
+            context.strokeStyle = "#ff8080";
+            context.lineWidth=3;
+            context.strokeRect(18.5, 0.5 + theCanvas.height - 51, theCanvas.width-37, 32);
+            context.fillStyle = "#ff8080";
+            context.fillRect(18.5, 0.5 + theCanvas.height - 51, loadpercentage*(theCanvas.width-37), 32);
+ 
+            // Draw the progress text
+            var loadtext = "Loaded " + loadcount + "/" + loadtotal + " images";
+            context.fillStyle = "#000000";
+            context.font = "16px Verdana";
+            context.fillText(loadtext, 18, 0.5 + theCanvas.height - 63);
+ 
+            if (preloaded) {
+                // Add a delay for demonstration purposes
+                setTimeout(function(){initialized = true;}, 1000);
+            }
+        } else {
+            // Update and render the game
+            update(tframe);
+            render();
+        }
+    }
+    init();
+
+    };
+</script>
+
+</body>
+</html>
+
+
+
+
